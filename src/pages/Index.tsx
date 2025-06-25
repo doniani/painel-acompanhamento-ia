@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { MessageSquare } from 'lucide-react';
 import LoginForm from '../components/Auth/LoginForm';
 import RegisterForm from '../components/Auth/RegisterForm';
 import Sidebar from '../components/Layout/Sidebar';

@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, MessageSquare } from 'lucide-react';
 
 interface LoginFormProps {
   onToggleMode: () => void;
