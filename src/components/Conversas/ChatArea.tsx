@@ -1,13 +1,12 @@
 
 import React, { useState } from 'react';
-import { CheckCircle, XCircle, Download, Phone, MoreVertical, ArrowLeft } from 'lucide-react';
+import { XCircle, Download, Phone, MoreVertical, ArrowLeft, CheckCircle } from 'lucide-react';
 
 interface Mensagem {
   id: string;
   texto: string;
   timestamp: string;
   isAI: boolean;
-  aprovada?: boolean;
 }
 
 interface ChatAreaProps {
@@ -17,6 +16,8 @@ interface ChatAreaProps {
 
 const ChatArea: React.FC<ChatAreaProps> = ({ conversaId, onBack }) => {
   const [statusGeral, setStatusGeral] = useState<'aprovada' | 'reprovada' | 'pendente'>('pendente');
+  const [showReprovalModal, setShowReprovalModal] = useState(false);
+  const [reprovalReason, setReprovalReason] = useState('');
   
   const conversaInfo = {
     clienteNome: 'João Silva',
@@ -35,8 +36,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ conversaId, onBack }) => {
       id: '2',
       texto: 'Olá! Claro, temos uma linha completa de produtos para atender suas necessidades. Que tipo de produto você está procurando?',
       timestamp: '14:26',
-      isAI: true,
-      aprovada: true
+      isAI: true
     },
     {
       id: '3',
@@ -48,8 +48,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ conversaId, onBack }) => {
       id: '4',
       texto: 'Perfeito! Temos excelentes opções para casa e jardim. Posso te mostrar nossos produtos mais populares: ferramentas de jardinagem, decoração para ambientes externos e produtos de limpeza ecológicos. Qual categoria te interessa mais?',
       timestamp: '14:28',
-      isAI: true,
-      aprovada: undefined
+      isAI: true
     },
     {
       id: '5',
@@ -61,18 +60,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({ conversaId, onBack }) => {
       id: '6',
       texto: 'Ótima escolha! Temos um kit completo com: tesoura de poda, enxada, rastelo e regadores. O preço promocional está R$ 189,90 com frete grátis. Gostaria de mais detalhes?',
       timestamp: '14:30',
-      isAI: true,
-      aprovada: undefined
+      isAI: true
     }
   ];
-
-  const handleAprovarMensagem = (mensagemId: string) => {
-    console.log(`Mensagem ${mensagemId} aprovada`);
-  };
-
-  const handleReprovarMensagem = (mensagemId: string) => {
-    console.log(`Mensagem ${mensagemId} reprovada`);
-  };
 
   const handleAprovarConversa = () => {
     setStatusGeral('aprovada');
@@ -80,8 +70,21 @@ const ChatArea: React.FC<ChatAreaProps> = ({ conversaId, onBack }) => {
   };
 
   const handleReprovarConversa = () => {
-    setStatusGeral('reprovada');
-    console.log('Conversa reprovada');
+    setShowReprovalModal(true);
+  };
+
+  const handleConfirmReproval = () => {
+    if (reprovalReason.trim()) {
+      setStatusGeral('reprovada');
+      console.log('Conversa reprovada:', reprovalReason);
+      setShowReprovalModal(false);
+      setReprovalReason('');
+    }
+  };
+
+  const handleCancelReproval = () => {
+    setShowReprovalModal(false);
+    setReprovalReason('');
   };
 
   const handleExportarHistorico = () => {
@@ -146,45 +149,18 @@ const ChatArea: React.FC<ChatAreaProps> = ({ conversaId, onBack }) => {
         {mensagens.map((mensagem) => (
           <div
             key={mensagem.id}
-            className={`flex ${mensagem.isAI ? 'justify-start' : 'justify-end'}`}
+            className={`flex ${mensagem.isAI ? 'justify-end' : 'justify-start'}`}
           >
             <div className={`max-w-xs lg:max-w-md xl:max-w-lg ${
-              mensagem.isAI ? 'bg-white' : 'bg-blue-500 text-white'
+              mensagem.isAI ? 'bg-blue-500 text-white' : 'bg-white'
             } rounded-lg px-4 py-3 shadow-sm`}>
               <p className="text-sm">{mensagem.texto}</p>
-              <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center justify-end mt-2">
                 <span className={`text-xs ${
-                  mensagem.isAI ? 'text-gray-500' : 'text-blue-100'
+                  mensagem.isAI ? 'text-blue-100' : 'text-gray-500'
                 }`}>
                   {mensagem.timestamp}
                 </span>
-                
-                {mensagem.isAI && (
-                  <div className="flex items-center space-x-2 ml-3">
-                    {mensagem.aprovada === true ? (
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                    ) : mensagem.aprovada === false ? (
-                      <XCircle className="w-4 h-4 text-red-500" />
-                    ) : (
-                      <div className="flex items-center space-x-1">
-                        <button
-                          onClick={() => handleAprovarMensagem(mensagem.id)}
-                          className="p-1 hover:bg-green-100 rounded"
-                          title="Aprovar mensagem"
-                        >
-                          <CheckCircle className="w-4 h-4 text-gray-400 hover:text-green-500" />
-                        </button>
-                        <button
-                          onClick={() => handleReprovarMensagem(mensagem.id)}
-                          className="p-1 hover:bg-red-100 rounded"
-                          title="Reprovar mensagem"
-                        >
-                          <XCircle className="w-4 h-4 text-gray-400 hover:text-red-500" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -213,6 +189,42 @@ const ChatArea: React.FC<ChatAreaProps> = ({ conversaId, onBack }) => {
           </button>
         </div>
       </div>
+
+      {/* Modal de Reprovação */}
+      {showReprovalModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Motivo da Reprovação
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Por favor, informe o motivo da reprovação desta conversa:
+            </p>
+            <textarea
+              value={reprovalReason}
+              onChange={(e) => setReprovalReason(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              rows={4}
+              placeholder="Digite o motivo da reprovação..."
+            />
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={handleCancelReproval}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmReproval}
+                disabled={!reprovalReason.trim()}
+                className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Confirmar Reprovação
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { MessageSquare } from 'lucide-react';
 import LoginForm from '../components/Auth/LoginForm';
 import RegisterForm from '../components/Auth/RegisterForm';
+import ForgotPasswordForm from '../components/Auth/ForgotPasswordForm';
 import Sidebar from '../components/Layout/Sidebar';
 import DashboardStats from '../components/Dashboard/DashboardStats';
 import RecentActivity from '../components/Dashboard/RecentActivity';
@@ -20,6 +21,21 @@ const Index = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedConversaId, setSelectedConversaId] = useState<string | null>(null);
   const [showMobileChat, setShowMobileChat] = useState(false);
+
+  // Auto-collapse sidebar on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) { // lg breakpoint
+        setSidebarCollapsed(true);
+      } else {
+        setSidebarCollapsed(false);
+      }
+    };
+
+    handleResize(); // Check initial size
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   if (loading) {
     return (
@@ -46,16 +62,7 @@ const Index = () => {
             <RegisterForm onToggleMode={() => setAuthMode('login')} />
           )}
           {authMode === 'forgot' && (
-            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-              <h1 className="text-2xl font-bold text-gray-900 mb-4">Recuperar Senha</h1>
-              <p className="text-gray-600 mb-6">Funcionalidade em desenvolvimento</p>
-              <button
-                onClick={() => setAuthMode('login')}
-                className="text-blue-600 hover:text-blue-500 font-medium"
-              >
-                Voltar para login
-              </button>
-            </div>
+            <ForgotPasswordForm onBack={() => setAuthMode('login')} />
           )}
         </div>
       </div>
@@ -163,6 +170,14 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      {/* Overlay for mobile */}
+      {sidebarCollapsed && window.innerWidth < 1024 && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+          onClick={() => setSidebarCollapsed(true)}
+        />
+      )}
+      
       <Sidebar
         activeSection={activeSection}
         onSectionChange={setActiveSection}
@@ -170,7 +185,9 @@ const Index = () => {
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
       
-      <main className="flex-1 overflow-auto">
+      <main className={`flex-1 overflow-auto transition-all duration-300 ${
+        sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
+      } ml-0`}>
         <div className={`p-6 ${activeSection === 'conversas' ? 'h-full' : ''}`}>
           {renderContent()}
         </div>

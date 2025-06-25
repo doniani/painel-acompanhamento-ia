@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Home, MessageSquare, Phone, User, HelpCircle, LogOut } from 'lucide-react';
+import { Home, MessageSquare, Phone, User, HelpCircle, LogOut, Menu } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
@@ -29,7 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div className={`bg-slate-900 text-white transition-all duration-300 ${
       isCollapsed ? 'w-16' : 'w-64'
-    } min-h-screen flex flex-col`}>
+    } min-h-screen flex flex-col fixed left-0 top-0 z-40 lg:relative lg:z-auto`}>
       {/* Header */}
       <div className="p-4 border-b border-slate-700">
         <div className="flex items-center justify-between">
@@ -40,9 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             onClick={onToggleCollapse}
             className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
           >
-            <div className="w-4 h-0.5 bg-white mb-1"></div>
-            <div className="w-4 h-0.5 bg-white mb-1"></div>
-            <div className="w-4 h-0.5 bg-white"></div>
+            <Menu className="w-5 h-5" />
           </button>
         </div>
         
@@ -74,14 +72,15 @@ const Sidebar: React.FC<SidebarProps> = ({
               <li key={item.id}>
                 <button
                   onClick={() => onSectionChange(item.id)}
-                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                  className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg transition-colors ${
                     isActive 
                       ? 'bg-blue-600 text-white' 
                       : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                   }`}
+                  title={isCollapsed ? item.label : undefined}
                 >
-                  <Icon size={20} />
-                  {!isCollapsed && <span>{item.label}</span>}
+                  <Icon size={isCollapsed ? 24 : 20} className="flex-shrink-0" />
+                  {!isCollapsed && <span className="truncate">{item.label}</span>}
                 </button>
               </li>
             );
@@ -93,10 +92,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-4 border-t border-slate-700">
         <button
           onClick={logout}
-          className="w-full flex items-center space-x-3 px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors"
+          className="w-full flex items-center space-x-3 px-3 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors"
+          title={isCollapsed ? 'Sair' : undefined}
         >
-          <LogOut size={20} />
-          {!isCollapsed && <span>Sair</span>}
+          <LogOut size={isCollapsed ? 24 : 20} className="flex-shrink-0" />
+          {!isCollapsed && <span className="truncate">Sair</span>}
         </button>
       </div>
     </div>

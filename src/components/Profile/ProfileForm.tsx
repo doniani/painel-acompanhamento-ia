@@ -11,12 +11,10 @@ const ProfileForm: React.FC = () => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    cpf_cnpj: user?.cpf_cnpj || '',
-    theme: user?.theme || 'light',
-    language: user?.language || 'pt_BR'
+    cpf_cnpj: user?.cpf_cnpj || ''
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
@@ -141,45 +139,6 @@ const ProfileForm: React.FC = () => {
                   placeholder="000.000.000-00"
                 />
                 <Phone className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-          </div>
-
-          {/* Preferences */}
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Preferências</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="theme" className="block text-sm font-medium text-gray-700 mb-2">
-                  Tema
-                </label>
-                <select
-                  id="theme"
-                  name="theme"
-                  value={formData.theme}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="light">Claro</option>
-                  <option value="dark">Escuro</option>
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="language" className="block text-sm font-medium text-gray-700 mb-2">
-                  Idioma
-                </label>
-                <select
-                  id="language"
-                  name="language"
-                  value={formData.language}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="pt_BR">Português (Brasil)</option>
-                  <option value="en_US">English (US)</option>
-                </select>
               </div>
             </div>
           </div>
