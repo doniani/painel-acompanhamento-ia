@@ -29,7 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div className={`bg-slate-900 text-white transition-all duration-300 ${
       isCollapsed ? 'w-16' : 'w-64'
-    } min-h-screen flex flex-col fixed left-0 top-0 z-40 lg:relative lg:z-auto`}>
+    } min-h-screen flex flex-col`}>
       {/* Header */}
       <div className="p-4 border-b border-slate-700">
         <div className="flex items-center justify-between">
@@ -79,7 +79,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   }`}
                   title={isCollapsed ? item.label : undefined}
                 >
-                  <Icon size={isCollapsed ? 24 : 20} className="flex-shrink-0" />
+                  <Icon size={20} className="flex-shrink-0" />
                   {!isCollapsed && <span className="truncate">{item.label}</span>}
                 </button>
               </li>
@@ -95,7 +95,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           className="w-full flex items-center space-x-3 px-3 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors"
           title={isCollapsed ? 'Sair' : undefined}
         >
-          <LogOut size={isCollapsed ? 24 : 20} className="flex-shrink-0" />
+          <LogOut size={20} className="flex-shrink-0" />
           {!isCollapsed && <span className="truncate">Sair</span>}
         </button>
       </div>

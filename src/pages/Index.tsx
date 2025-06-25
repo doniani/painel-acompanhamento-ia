@@ -170,14 +170,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Overlay for mobile */}
-      {sidebarCollapsed && window.innerWidth < 1024 && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
-          onClick={() => setSidebarCollapsed(true)}
-        />
-      )}
-      
       <Sidebar
         activeSection={activeSection}
         onSectionChange={setActiveSection}
@@ -185,9 +177,7 @@ const Index = () => {
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
       
-      <main className={`flex-1 overflow-auto transition-all duration-300 ${
-        sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
-      } ml-0`}>
+      <main className="flex-1 overflow-auto">
         <div className={`p-6 ${activeSection === 'conversas' ? 'h-full' : ''}`}>
           {renderContent()}
         </div>
