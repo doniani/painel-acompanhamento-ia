@@ -1,12 +1,64 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Phone, MessageSquare, CheckCircle, Clock } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const DashboardStats: React.FC = () => {
-  const stats = [
+  const [stats, setStats] = useState({
+    totalAtendimentos: 0,
+    conversasAtivas: 0,
+    aprovadas: 0,
+    pendentes: 0
+  });
+  
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Total de atendimentos
+        const { count: totalAtendimentos } = await supabase
+          .from('atendimentos')
+          .select('*', { count: 'exact', head: true });
+
+        // Conversas ativas (pendentes + com mensagens recentes)
+        const { count: conversasAtivas } = await supabase
+          .from('conversas')
+          .select('*', { count: 'exact', head: true })
+          .neq('status', 'reprovada');
+
+        // Conversas aprovadas
+        const { count: aprovadas } = await supabase
+          .from('conversas')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'aprovada');
+
+        // Conversas pendentes
+        const { count: pendentes } = await supabase
+          .from('conversas')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pendente');
+
+        setStats({
+          totalAtendimentos: totalAtendimentos || 0,
+          conversasAtivas: conversasAtivas || 0,
+          aprovadas: aprovadas || 0,
+          pendentes: pendentes || 0
+        });
+      } catch (error) {
+        console.error('Erro ao buscar estatísticas:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  const statsConfig = [
     {
       title: 'Total de Atendimentos',
-      value: '1,247',
+      value: loading ? '...' : stats.totalAtendimentos.toString(),
       change: '+12%',
       changeType: 'positive',
       icon: Phone,
@@ -14,7 +66,7 @@ const DashboardStats: React.FC = () => {
     },
     {
       title: 'Conversas Ativas',
-      value: '324',
+      value: loading ? '...' : stats.conversasAtivas.toString(),
       change: '+5%',
       changeType: 'positive',
       icon: MessageSquare,
@@ -22,7 +74,7 @@ const DashboardStats: React.FC = () => {
     },
     {
       title: 'Aprovadas',
-      value: '892',
+      value: loading ? '...' : stats.aprovadas.toString(),
       change: '+8%',
       changeType: 'positive',
       icon: CheckCircle,
@@ -30,7 +82,7 @@ const DashboardStats: React.FC = () => {
     },
     {
       title: 'Pendentes',
-      value: '31',
+      value: loading ? '...' : stats.pendentes.toString(),
       change: '-15%',
       changeType: 'negative',
       icon: Clock,
@@ -50,7 +102,7 @@ const DashboardStats: React.FC = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-      {stats.map((stat, index) => {
+      {statsConfig.map((stat, index) => {
         const Icon = stat.icon;
         return (
           <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">

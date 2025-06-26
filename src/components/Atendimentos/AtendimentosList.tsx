@@ -1,115 +1,93 @@
 
 import React, { useState } from 'react';
-import { Search, Filter, Phone, Clock, CheckCircle, XCircle } from 'lucide-react';
-
-interface Atendimento {
-  id: string;
-  nome: string;
-  telefone: string;
-  data: string;
-  status: 'aprovado' | 'sem_resposta' | 'rejeitado';
-  mensagens: number;
-  ultimaInteracao: string;
-}
+import { Search, Filter, Calendar, Phone, MessageSquare, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { useAtendimentos } from '@/hooks/useAtendimentos';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const AtendimentosList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('todos');
-  const [dateFilter, setDateFilter] = useState<string>('');
-
-  const atendimentos: Atendimento[] = [
-    {
-      id: '1',
-      nome: 'João Silva',
-      telefone: '(11) 99999-9999',
-      data: '2024-01-15',
-      status: 'aprovado',
-      mensagens: 12,
-      ultimaInteracao: '2 horas atrás'
-    },
-    {
-      id: '2',
-      nome: 'Maria Santos',
-      telefone: '(11) 88888-8888',
-      data: '2024-01-15',
-      status: 'sem_resposta',
-      mensagens: 5,
-      ultimaInteracao: '1 dia atrás'
-    },
-    {
-      id: '3',
-      nome: 'Pedro Costa',
-      telefone: '(11) 77777-7777',
-      data: '2024-01-14',
-      status: 'rejeitado',
-      mensagens: 8,
-      ultimaInteracao: '3 horas atrás'
-    },
-    {
-      id: '4',
-      nome: 'Ana Oliveira',
-      telefone: '(11) 66666-6666',
-      data: '2024-01-14',
-      status: 'aprovado',
-      mensagens: 15,
-      ultimaInteracao: '30 min atrás'
-    }
-  ];
+  const [statusFilter, setStatusFilter] = useState('todos');
+  const { atendimentos, loading, updateAtendimento } = useAtendimentos();
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'aprovado':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
-      case 'rejeitado':
-        return <XCircle className="w-5 h-5 text-red-500" />;
+      case 'respondido':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'em_andamento':
+        return <Clock className="w-4 h-4 text-yellow-500" />;
+      case 'sem_resposta':
+        return <XCircle className="w-4 h-4 text-red-500" />;
       default:
-        return <Clock className="w-5 h-5 text-yellow-500" />;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'aprovado':
-        return 'Aprovado';
-      case 'rejeitado':
-        return 'Rejeitado';
-      default:
-        return 'Sem resposta';
+        return <AlertCircle className="w-4 h-4 text-gray-500" />;
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'aprovado':
-        return 'bg-green-100 text-green-800';
-      case 'rejeitado':
-        return 'bg-red-100 text-red-800';
+      case 'respondido':
+        return <Badge variant="default" className="bg-green-100 text-green-800">Respondido</Badge>;
+      case 'em_andamento':
+        return <Badge variant="default" className="bg-yellow-100 text-yellow-800">Em Andamento</Badge>;
+      case 'sem_resposta':
+        return <Badge variant="destructive">Sem Resposta</Badge>;
       default:
-        return 'bg-yellow-100 text-yellow-800';
+        return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
   const filteredAtendimentos = atendimentos.filter(atendimento => {
-    const matchesSearch = atendimento.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         atendimento.telefone.includes(searchTerm);
-    const matchesStatus = statusFilter === 'todos' || atendimento.status === statusFilter;
-    const matchesDate = !dateFilter || atendimento.data === dateFilter;
+    const matchesSearch = 
+      atendimento.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      atendimento.telefone.includes(searchTerm);
     
-    return matchesSearch && matchesStatus && matchesDate;
+    const matchesStatus = statusFilter === 'todos' || atendimento.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
   });
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('pt-BR');
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando atendimentos...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-      {/* Header */}
+      {/* Header com filtros */}
       <div className="p-6 border-b border-gray-200">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Atendimentos</h2>
-            <p className="text-sm text-gray-600 mt-1">Gerencie todos os seus atendimentos</p>
+            <h2 className="text-lg font-semibold text-gray-900">Lista de Atendimentos</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              {filteredAtendimentos.length} atendimento{filteredAtendimentos.length !== 1 ? 's' : ''} encontrado{filteredAtendimentos.length !== 1 ? 's' : ''}
+            </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-            {/* Search */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            {/* Busca */}
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <input
@@ -117,115 +95,97 @@ const AtendimentosList: React.FC = () => {
                 placeholder="Buscar por nome ou telefone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64"
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm w-full sm:w-64"
               />
             </div>
             
-            {/* Status Filter */}
+            {/* Filtro de Status */}
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             >
-              <option value="todos">Todos os status</option>
-              <option value="aprovado">Aprovado</option>
-              <option value="sem_resposta">Sem resposta</option>
-              <option value="rejeitado">Rejeitado</option>
+              <option value="todos">Todos os Status</option>
+              <option value="sem_resposta">Sem Resposta</option>
+              <option value="em_andamento">Em Andamento</option>
+              <option value="respondido">Respondido</option>
             </select>
-            
-            {/* Date Filter */}
-            <input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
           </div>
         </div>
       </div>
 
-      {/* Table */}
+      {/* Tabela */}
       <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Cliente
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Telefone
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Data
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Mensagens
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Última Interação
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Ações
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredAtendimentos.map((atendimento) => (
-              <tr key={atendimento.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-blue-600">
-                        {atendimento.nome.split(' ').map(n => n.charAt(0)).join('')}
-                      </span>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900">{atendimento.nome}</p>
-                    </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[50px]">Status</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Telefone</TableHead>
+              <TableHead>Data</TableHead>
+              <TableHead>Última Interação</TableHead>
+              <TableHead>Mensagens</TableHead>
+              <TableHead>Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredAtendimentos.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8">
+                  <div className="text-gray-500">
+                    <MessageSquare className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p>{searchTerm || statusFilter !== 'todos' ? 'Nenhum atendimento encontrado com os filtros aplicados' : 'Nenhum atendimento encontrado'}</p>
                   </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center text-sm text-gray-900">
-                    <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                    {atendimento.telefone}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {new Date(atendimento.data).toLocaleDateString('pt-BR')}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    {getStatusIcon(atendimento.status)}
-                    <span className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(atendimento.status)}`}>
-                      {getStatusText(atendimento.status)}
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredAtendimentos.map((atendimento) => (
+                <TableRow key={atendimento.id} className="hover:bg-gray-50">
+                  <TableCell>
+                    <div className="flex items-center">
+                      {getStatusIcon(atendimento.status)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium text-gray-900">{atendimento.nome}</p>
+                      <p className="text-sm text-gray-500">ID: {atendimento.id.slice(0, 8)}...</p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Phone className="w-4 h-4 mr-1" />
+                      {atendimento.telefone}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {formatDate(atendimento.data)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-gray-600">
+                      {formatDateTime(atendimento.ultima_interacao)}
                     </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {atendimento.mensagens}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {atendimento.ultimaInteracao}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <button className="text-blue-600 hover:text-blue-700 font-medium">
-                    Ver conversa
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center">
+                      <MessageSquare className="w-4 h-4 mr-1 text-gray-400" />
+                      <span className="text-sm font-medium">{atendimento.mensagens_count || 0}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      {getStatusBadge(atendimento.status)}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
-
-      {filteredAtendimentos.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500">Nenhum atendimento encontrado</p>
-        </div>
-      )}
     </div>
   );
 };

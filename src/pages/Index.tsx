@@ -8,6 +8,7 @@ import ForgotPasswordForm from '../components/Auth/ForgotPasswordForm';
 import Sidebar from '../components/Layout/Sidebar';
 import DashboardStats from '../components/Dashboard/DashboardStats';
 import RecentActivity from '../components/Dashboard/RecentActivity';
+import SystemStatus from '../components/SystemCheck/SystemStatus';
 import AtendimentosList from '../components/Atendimentos/AtendimentosList';
 import ConversasList from '../components/Conversas/ConversasList';
 import ChatArea from '../components/Conversas/ChatArea';
@@ -89,7 +90,10 @@ const Index = () => {
               <p className="text-gray-600 mt-1">Visão geral dos seus atendimentos</p>
             </div>
             <DashboardStats />
-            <RecentActivity />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <RecentActivity />
+              <SystemStatus />
+            </div>
           </div>
         );
 

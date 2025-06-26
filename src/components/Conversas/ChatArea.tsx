@@ -1,13 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { XCircle, Download, Phone, MoreVertical, ArrowLeft, CheckCircle } from 'lucide-react';
-
-interface Mensagem {
-  id: string;
-  texto: string;
-  timestamp: string;
-  isAI: boolean;
-}
+import { useMensagens } from '@/hooks/useMensagens';
+import { useConversas } from '@/hooks/useConversas';
 
 interface ChatAreaProps {
   conversaId: string;
@@ -15,70 +10,32 @@ interface ChatAreaProps {
 }
 
 const ChatArea: React.FC<ChatAreaProps> = ({ conversaId, onBack }) => {
-  const [statusGeral, setStatusGeral] = useState<'aprovada' | 'reprovada' | 'pendente'>('pendente');
+  const { mensagens, loading: loadingMensagens } = useMensagens(conversaId);
+  const { conversas, updateConversaStatus } = useConversas();
   const [showReprovalModal, setShowReprovalModal] = useState(false);
   const [reprovalReason, setReprovalReason] = useState('');
   
-  const conversaInfo = {
-    clienteNome: 'João Silva',
-    clienteTelefone: '(11) 99999-9999',
-    avatar: 'JS'
-  };
+  const conversa = conversas.find(c => c.id === conversaId);
 
-  const mensagens: Mensagem[] = [
-    {
-      id: '1',
-      texto: 'Olá! Gostaria de saber mais sobre seus produtos.',
-      timestamp: '14:25',
-      isAI: false
-    },
-    {
-      id: '2',
-      texto: 'Olá! Claro, temos uma linha completa de produtos para atender suas necessidades. Que tipo de produto você está procurando?',
-      timestamp: '14:26',
-      isAI: true
-    },
-    {
-      id: '3',
-      texto: 'Estou interessado em produtos para casa e jardim.',
-      timestamp: '14:27',
-      isAI: false
-    },
-    {
-      id: '4',
-      texto: 'Perfeito! Temos excelentes opções para casa e jardim. Posso te mostrar nossos produtos mais populares: ferramentas de jardinagem, decoração para ambientes externos e produtos de limpeza ecológicos. Qual categoria te interessa mais?',
-      timestamp: '14:28',
-      isAI: true
-    },
-    {
-      id: '5',
-      texto: 'As ferramentas de jardinagem me interessam bastante.',
-      timestamp: '14:29',
-      isAI: false
-    },
-    {
-      id: '6',
-      texto: 'Ótima escolha! Temos um kit completo com: tesoura de poda, enxada, rastelo e regadores. O preço promocional está R$ 189,90 com frete grátis. Gostaria de mais detalhes?',
-      timestamp: '14:30',
-      isAI: true
+  const handleAprovarConversa = async () => {
+    const success = await updateConversaStatus(conversaId, 'aprovada');
+    if (success) {
+      console.log('Conversa aprovada');
     }
-  ];
-
-  const handleAprovarConversa = () => {
-    setStatusGeral('aprovada');
-    console.log('Conversa aprovada');
   };
 
   const handleReprovarConversa = () => {
     setShowReprovalModal(true);
   };
 
-  const handleConfirmReproval = () => {
+  const handleConfirmReproval = async () => {
     if (reprovalReason.trim()) {
-      setStatusGeral('reprovada');
-      console.log('Conversa reprovada:', reprovalReason);
-      setShowReprovalModal(false);
-      setReprovalReason('');
+      const success = await updateConversaStatus(conversaId, 'reprovada', reprovalReason);
+      if (success) {
+        console.log('Conversa reprovada:', reprovalReason);
+        setShowReprovalModal(false);
+        setReprovalReason('');
+      }
     }
   };
 
@@ -88,8 +45,32 @@ const ChatArea: React.FC<ChatAreaProps> = ({ conversaId, onBack }) => {
   };
 
   const handleExportarHistorico = () => {
-    console.log('Exportando histórico...');
+    if (mensagens.length === 0) return;
+    
+    const historicoTexto = mensagens.map(msg => 
+      `[${msg.timestamp}] ${msg.is_ai ? 'IA' : conversa?.cliente_nome || 'Cliente'}: ${msg.texto}`
+    ).join('\n');
+    
+    const blob = new Blob([historicoTexto], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `conversa-${conversa?.cliente_nome || 'cliente'}-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
+
+  if (!conversa) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="text-gray-500">Conversa não encontrada.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col h-full bg-gray-50">
@@ -107,32 +88,33 @@ const ChatArea: React.FC<ChatAreaProps> = ({ conversaId, onBack }) => {
             )}
             
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium text-blue-600">{conversaInfo.avatar}</span>
+              <span className="text-sm font-medium text-blue-600">{conversa.avatar}</span>
             </div>
             
             <div>
-              <h3 className="font-medium text-gray-900">{conversaInfo.clienteNome}</h3>
+              <h3 className="font-medium text-gray-900">{conversa.cliente_nome}</h3>
               <p className="text-sm text-gray-500 flex items-center">
                 <Phone className="w-3 h-3 mr-1" />
-                {conversaInfo.clienteTelefone}
+                {conversa.cliente_telefone}
               </p>
             </div>
           </div>
           
           <div className="flex items-center space-x-2">
             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-              statusGeral === 'aprovada' ? 'bg-green-100 text-green-700' :
-              statusGeral === 'reprovada' ? 'bg-red-100 text-red-700' :
+              conversa.status === 'aprovada' ? 'bg-green-100 text-green-700' :
+              conversa.status === 'reprovada' ? 'bg-red-100 text-red-700' :
               'bg-yellow-100 text-yellow-700'
             }`}>
-              {statusGeral === 'aprovada' ? 'Aprovada' :
-               statusGeral === 'reprovada' ? 'Reprovada' : 'Pendente'}
+              {conversa.status === 'aprovada' ? 'Aprovada' :
+               conversa.status === 'reprovada' ? 'Reprovada' : 'Pendente'}
             </span>
             
             <button
               onClick={handleExportarHistorico}
               className="p-2 hover:bg-gray-100 rounded-lg"
               title="Exportar histórico"
+              disabled={mensagens.length === 0}
             >
               <Download className="w-5 h-5 text-gray-600" />
             </button>
@@ -146,25 +128,35 @@ const ChatArea: React.FC<ChatAreaProps> = ({ conversaId, onBack }) => {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {mensagens.map((mensagem) => (
-          <div
-            key={mensagem.id}
-            className={`flex ${mensagem.isAI ? 'justify-end' : 'justify-start'}`}
-          >
-            <div className={`max-w-xs lg:max-w-md xl:max-w-lg ${
-              mensagem.isAI ? 'bg-blue-500 text-white' : 'bg-white'
-            } rounded-lg px-4 py-3 shadow-sm`}>
-              <p className="text-sm">{mensagem.texto}</p>
-              <div className="flex items-center justify-end mt-2">
-                <span className={`text-xs ${
-                  mensagem.isAI ? 'text-blue-100' : 'text-gray-500'
-                }`}>
-                  {mensagem.timestamp}
-                </span>
+        {loadingMensagens ? (
+          <div className="flex items-center justify-center h-32">
+            <div className="w-6 h-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : mensagens.length === 0 ? (
+          <div className="flex items-center justify-center h-32">
+            <p className="text-gray-500">Nenhuma mensagem encontrada.</p>
+          </div>
+        ) : (
+          mensagens.map((mensagem) => (
+            <div
+              key={mensagem.id}
+              className={`flex ${mensagem.is_ai ? 'justify-end' : 'justify-start'}`}
+            >
+              <div className={`max-w-xs lg:max-w-md xl:max-w-lg ${
+                mensagem.is_ai ? 'bg-blue-500 text-white' : 'bg-white'
+              } rounded-lg px-4 py-3 shadow-sm`}>
+                <p className="text-sm">{mensagem.texto}</p>
+                <div className="flex items-center justify-end mt-2">
+                  <span className={`text-xs ${
+                    mensagem.is_ai ? 'text-blue-100' : 'text-gray-500'
+                  }`}>
+                    {mensagem.timestamp}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Actions */}
@@ -172,7 +164,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ conversaId, onBack }) => {
         <div className="flex items-center justify-center space-x-4">
           <button
             onClick={handleReprovarConversa}
-            disabled={statusGeral === 'reprovada'}
+            disabled={conversa.status === 'reprovada'}
             className="flex items-center space-x-2 px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <XCircle className="w-4 h-4" />
@@ -181,7 +173,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ conversaId, onBack }) => {
           
           <button
             onClick={handleAprovarConversa}
-            disabled={statusGeral === 'aprovada'}
+            disabled={conversa.status === 'aprovada'}
             className="flex items-center space-x-2 px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <CheckCircle className="w-4 h-4" />
