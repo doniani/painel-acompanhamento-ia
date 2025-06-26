@@ -9,11 +9,11 @@ export interface Atendimento {
   telefone: string;
   data: string;
   status: string;
-  ultima_interacao: string;
-  mensagens_count: number;
-  conversa_id?: string;
-  created_at: string;
-  updated_at: string;
+  ultima_interacao: string | null;
+  mensagens_count: number | null;
+  conversa_id?: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export const useAtendimentos = () => {
@@ -24,14 +24,21 @@ export const useAtendimentos = () => {
   const fetchAtendimentos = async () => {
     try {
       setLoading(true);
+      console.log('Fetching atendimentos...');
       
       const { data, error } = await supabase
         .from('atendimentos')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      console.log('Atendimentos response:', { data, error });
 
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Fetched atendimentos:', data?.length || 0);
       setAtendimentos(data || []);
     } catch (error) {
       console.error('Erro ao buscar atendimentos:', error);
