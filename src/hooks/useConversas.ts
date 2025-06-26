@@ -7,10 +7,10 @@ export interface Conversa {
   id: string;
   cliente_nome: string;
   cliente_telefone: string;
-  status: 'aprovada' | 'reprovada' | 'pendente';
-  created_at: string;
-  updated_at: string;
-  motivo_reprovacao?: string;
+  status: 'aprovada' | 'reprovada' | 'pendente' | null;
+  created_at: string | null;
+  updated_at: string | null;
+  motivo_reprovacao?: string | null;
   ultimaMensagem?: string;
   naoLidas?: number;
   avatar?: string;
@@ -59,6 +59,7 @@ export const useConversas = () => {
 
           return {
             ...conversa,
+            status: conversa.status as 'aprovada' | 'reprovada' | 'pendente' | null,
             ultimaMensagem: ultimaMensagem?.texto || 'Sem mensagens',
             naoLidas: naoLidas || 0,
             avatar
