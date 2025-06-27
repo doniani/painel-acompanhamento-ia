@@ -31,6 +31,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
     e.preventDefault();
     setError('');
 
+    // Validações
     if (formData.password !== formData.confirmPassword) {
       setError('As senhas não coincidem');
       return;
@@ -41,11 +42,16 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
       return;
     }
 
+    if (!formData.name.trim()) {
+      setError('Nome é obrigatório');
+      return;
+    }
+
     setLoading(true);
     try {
       await register(formData.email, formData.password, formData.name);
-    } catch (err) {
-      setError('Erro ao criar conta');
+    } catch (err: any) {
+      setError(err.message || 'Erro ao criar conta');
     } finally {
       setLoading(false);
     }

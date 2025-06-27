@@ -153,30 +153,42 @@ export type Database = {
       }
       users: {
         Row: {
+          ativo: boolean
           avatar: string | null
           cpf_cnpj: string | null
           created_at: string | null
           email: string
           id: string
           name: string
+          password_hash: string | null
+          reset_token: string | null
+          reset_token_expires: string | null
           updated_at: string | null
         }
         Insert: {
+          ativo?: boolean
           avatar?: string | null
           cpf_cnpj?: string | null
           created_at?: string | null
           email: string
           id?: string
           name: string
+          password_hash?: string | null
+          reset_token?: string | null
+          reset_token_expires?: string | null
           updated_at?: string | null
         }
         Update: {
+          ativo?: boolean
           avatar?: string | null
           cpf_cnpj?: string | null
           created_at?: string | null
           email?: string
           id?: string
           name?: string
+          password_hash?: string | null
+          reset_token?: string | null
+          reset_token_expires?: string | null
           updated_at?: string | null
         }
         Relationships: []

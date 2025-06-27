@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Mail, Lock, Eye, EyeOff, MessageSquare } from 'lucide-react';
@@ -23,8 +24,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, onForgotPassword })
 
     try {
       await login(email, password);
-    } catch (err) {
-      setError('Credenciais inválidas');
+    } catch (err: any) {
+      setError(err.message || 'Erro ao fazer login');
     } finally {
       setLoading(false);
     }

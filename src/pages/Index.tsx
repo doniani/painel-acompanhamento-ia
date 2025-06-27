@@ -14,6 +14,7 @@ import ConversasList from '../components/Conversas/ConversasList';
 import ChatArea from '../components/Conversas/ChatArea';
 import ProfileForm from '../components/Profile/ProfileForm';
 import HelpPage from '../components/Help/HelpPage';
+import { createTestUser } from '../utils/createTestUser';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -38,6 +39,11 @@ const Index = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Criar usuário de teste quando a aplicação carregar
+  useEffect(() => {
+    createTestUser();
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -53,6 +59,15 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
+          {/* Informações do usuário de teste */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <h3 className="font-semibold text-blue-800 mb-2">Usuário de Teste</h3>
+            <div className="text-sm text-blue-700">
+              <p><strong>Email:</strong> admin@teste.com</p>
+              <p><strong>Senha:</strong> 123456</p>
+            </div>
+          </div>
+
           {authMode === 'login' && (
             <LoginForm
               onToggleMode={() => setAuthMode('register')}

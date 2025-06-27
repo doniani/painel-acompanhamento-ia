@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import { Mail, ArrowLeft, MessageSquare } from 'lucide-react';
 
 interface ForgotPasswordFormProps {
@@ -10,20 +11,23 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBack }) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const { forgotPassword } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
+    setError('');
 
     try {
-      // Simular envio de email de recuperação
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await forgotPassword(email);
       setIsSuccess(true);
       setMessage('E-mail de recuperação enviado com sucesso! Verifique sua caixa de entrada.');
-    } catch (error) {
-      setMessage('Erro ao enviar e-mail de recuperação. Tente novamente.');
+    } catch (err: any) {
+      setError(err.message || 'Erro ao enviar e-mail de recuperação.');
     } finally {
       setLoading(false);
     }
@@ -47,9 +51,9 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBack }) => {
 
         {!isSuccess ? (
           <form onSubmit={handleSubmit} className="space-y-6">
-            {message && (
+            {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                {message}
+                {error}
               </div>
             )}
 
@@ -90,6 +94,17 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBack }) => {
               <p>• Aguarde alguns minutos</p>
               <p>• Tente novamente com outro e-mail</p>
             </div>
+            <button
+              onClick={() => {
+                setIsSuccess(false);
+                setEmail('');
+                setMessage('');
+                setError('');
+              }}
+              className="text-blue-600 hover:text-blue-500 font-medium"
+            >
+              Tentar novamente
+            </button>
           </div>
         )}
 
