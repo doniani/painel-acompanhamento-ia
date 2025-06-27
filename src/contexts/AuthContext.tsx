@@ -15,6 +15,18 @@ interface User {
   ativo: boolean;
 }
 
+interface DatabaseUser {
+  id: string;
+  email: string;
+  name: string;
+  avatar?: string;
+  cpf_cnpj?: string;
+  password_hash?: string;
+  ativo: boolean;
+  reset_token?: string;
+  reset_token_expires?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
@@ -62,16 +74,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         console.log('Resultado da verificação do usuário:', { data, error });
 
-        if (!error && data && data.ativo) {
+        if (!error && data && (data as DatabaseUser).ativo) {
+          const dbUser = data as DatabaseUser;
           setUser({
-            id: data.id,
-            email: data.email,
-            name: data.name,
-            avatar: data.avatar,
-            cpf_cnpj: data.cpf_cnpj,
+            id: dbUser.id,
+            email: dbUser.email,
+            name: dbUser.name,
+            avatar: dbUser.avatar,
+            cpf_cnpj: dbUser.cpf_cnpj,
             theme: 'light',
             language: 'pt_BR',
-            ativo: data.ativo
+            ativo: dbUser.ativo
           });
         } else {
           console.log('Usuário não encontrado ou inativo, removendo do localStorage');
@@ -103,18 +116,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Credenciais inválidas');
       }
 
+      const dbUser = userData as DatabaseUser;
+
       // Verificar se o usuário está ativo
-      if (!userData.ativo) {
+      if (!dbUser.ativo) {
         throw new Error('Usuário inativo. Entre em contato com o administrador.');
       }
 
       // Verificar senha
-      if (!userData.password_hash) {
+      if (!dbUser.password_hash) {
         throw new Error('Credenciais inválidas');
       }
 
       console.log('Verificando senha...');
-      const isPasswordValid = await bcrypt.compare(password, userData.password_hash);
+      const isPasswordValid = await bcrypt.compare(password, dbUser.password_hash);
       console.log('Senha válida:', isPasswordValid);
       
       if (!isPasswordValid) {
@@ -122,14 +137,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const authenticatedUser: User = {
-        id: userData.id,
-        email: userData.email,
-        name: userData.name,
-        avatar: userData.avatar,
-        cpf_cnpj: userData.cpf_cnpj,
+        id: dbUser.id,
+        email: dbUser.email,
+        name: dbUser.name,
+        avatar: dbUser.avatar,
+        cpf_cnpj: dbUser.cpf_cnpj,
         theme: 'light',
         language: 'pt_BR',
-        ativo: userData.ativo
+        ativo: dbUser.ativo
       };
 
       setUser(authenticatedUser);
@@ -137,7 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       toast({
         title: "Login realizado com sucesso!",
-        description: `Bem-vindo, ${userData.name}!`,
+        description: `Bem-vindo, ${dbUser.name}!`,
       });
     } catch (error: any) {
       console.error('Erro no login:', error);
@@ -192,15 +207,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Erro ao criar conta. Tente novamente.');
       }
 
+      const dbUser = newUser as DatabaseUser;
+
       const authenticatedUser: User = {
-        id: newUser.id,
-        email: newUser.email,
-        name: newUser.name,
-        avatar: newUser.avatar,
-        cpf_cnpj: newUser.cpf_cnpj,
+        id: dbUser.id,
+        email: dbUser.email,
+        name: dbUser.name,
+        avatar: dbUser.avatar,
+        cpf_cnpj: dbUser.cpf_cnpj,
         theme: 'light',
         language: 'pt_BR',
-        ativo: newUser.ativo
+        ativo: dbUser.ativo
       };
 
       setUser(authenticatedUser);
@@ -231,7 +248,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Usuário ou senha inválidos');
       }
 
-      if (!userData.ativo) {
+      const dbUser = userData as Pick<DatabaseUser, 'id' | 'name' | 'ativo'>;
+
+      if (!dbUser.ativo) {
         throw new Error('Usuário ou senha inválidos');
       }
 
@@ -247,7 +266,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           reset_token: resetToken,
           reset_token_expires: expiresAt.toISOString()
         })
-        .eq('id', userData.id);
+        .eq('id', dbUser.id);
 
       if (updateError) {
         throw new Error('Erro ao processar solicitação');
@@ -280,6 +299,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Token inválido ou expirado');
       }
 
+      const dbUser = userData as Pick<DatabaseUser, 'id'>;
+
       // Hash da nova senha
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
@@ -292,7 +313,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           reset_token: null,
           reset_token_expires: null
         })
-        .eq('id', userData.id);
+        .eq('id', dbUser.id);
 
       if (updateError) {
         throw new Error('Erro ao redefinir senha');

@@ -2,6 +2,16 @@
 import { supabase } from '@/integrations/supabase/client';
 import bcrypt from 'bcryptjs';
 
+interface DatabaseUser {
+  id: string;
+  email: string;
+  name: string;
+  password_hash?: string;
+  avatar?: string;
+  cpf_cnpj?: string;
+  ativo: boolean;
+}
+
 export const createTestUser = async () => {
   try {
     console.log('Criando usuário de teste...');
@@ -48,10 +58,13 @@ export const createTestUser = async () => {
       return;
     }
 
-    console.log('Usuário de teste criado com sucesso!');
-    console.log('Email:', testEmail);
-    console.log('Senha:', testPassword);
-    console.log('ID:', data?.id);
+    if (data) {
+      const dbUser = data as DatabaseUser;
+      console.log('Usuário de teste criado com sucesso!');
+      console.log('Email:', testEmail);
+      console.log('Senha:', testPassword);
+      console.log('ID:', dbUser.id);
+    }
 
   } catch (error) {
     console.error('Erro ao criar usuário de teste:', error);

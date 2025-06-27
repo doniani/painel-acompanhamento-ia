@@ -198,7 +198,52 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_user: {
+        Args: {
+          user_email: string
+          user_name: string
+          user_password_hash: string
+        }
+        Returns: {
+          id: string
+          email: string
+          name: string
+          avatar: string
+          cpf_cnpj: string
+          ativo: boolean
+        }[]
+      }
+      get_user_by_email: {
+        Args: { user_email: string }
+        Returns: {
+          id: string
+          email: string
+          name: string
+          password_hash: string
+          avatar: string
+          cpf_cnpj: string
+          ativo: boolean
+        }[]
+      }
+      get_user_by_id: {
+        Args: { user_id: string }
+        Returns: {
+          id: string
+          email: string
+          name: string
+          avatar: string
+          cpf_cnpj: string
+          ativo: boolean
+        }[]
+      }
+      reset_password_with_token: {
+        Args: { token: string; new_password_hash: string }
+        Returns: boolean
+      }
+      update_reset_token: {
+        Args: { user_email: string; reset_token: string; expires_at: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
