@@ -4,19 +4,21 @@ import bcrypt from 'bcryptjs';
 
 export const createTestUser = async () => {
   try {
-    // Criar usuário de teste
+    console.log('Criando usuário de teste...');
+    
+    // Dados do usuário de teste
     const testEmail = 'admin@teste.com';
     const testPassword = '123456';
     const testName = 'Administrador Teste';
 
-    // Verificar se já existe
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', testEmail)
-      .single();
+    // Verificar se já existe usando RPC
+    const { data: existingUser, error: checkError } = await supabase.rpc('get_user_by_email', { 
+      user_email: testEmail 
+    });
 
-    if (existingUser) {
+    console.log('Verificação de usuário existente:', { existingUser, checkError });
+
+    if (existingUser && existingUser.length > 0) {
       console.log('Usuário de teste já existe:', testEmail);
       return;
     }
@@ -25,17 +27,14 @@ export const createTestUser = async () => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(testPassword, saltRounds);
 
-    // Criar usuário
-    const { data, error } = await supabase
-      .from('users')
-      .insert([{
-        email: testEmail,
-        name: testName,
-        password_hash: hashedPassword,
-        ativo: true
-      }])
-      .select()
-      .single();
+    // Criar usuário usando RPC
+    const { data, error } = await supabase.rpc('create_user', {
+      user_email: testEmail,
+      user_name: testName,
+      user_password_hash: hashedPassword
+    });
+
+    console.log('Resultado da criação do usuário de teste:', { data, error });
 
     if (error) {
       console.error('Erro ao criar usuário de teste:', error);
@@ -45,7 +44,7 @@ export const createTestUser = async () => {
     console.log('Usuário de teste criado com sucesso!');
     console.log('Email:', testEmail);
     console.log('Senha:', testPassword);
-    console.log('ID:', data.id);
+    console.log('ID:', data[0]?.id);
 
   } catch (error) {
     console.error('Erro ao criar usuário de teste:', error);

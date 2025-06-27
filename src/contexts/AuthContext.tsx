@@ -50,26 +50,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const savedUser = localStorage.getItem('user');
       if (savedUser) {
         const userData = JSON.parse(savedUser);
-        // Verificar se o usuário ainda está ativo no banco
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', userData.id)
-          .eq('ativo', true)
-          .single();
+        console.log('Verificando usuário salvo:', userData);
+        
+        // Verificar se o usuário ainda está ativo no banco usando RPC
+        const { data, error } = await supabase.rpc('get_user_by_id', { 
+          user_id: userData.id 
+        });
 
-        if (!error && data) {
+        console.log('Resultado da verificação do usuário:', { data, error });
+
+        if (!error && data && data.length > 0 && data[0].ativo) {
+          const dbUser = data[0];
           setUser({
-            id: data.id,
-            email: data.email,
-            name: data.name,
-            avatar: data.avatar,
-            cpf_cnpj: data.cpf_cnpj,
+            id: dbUser.id,
+            email: dbUser.email,
+            name: dbUser.name,
+            avatar: dbUser.avatar,
+            cpf_cnpj: dbUser.cpf_cnpj,
             theme: 'light',
             language: 'pt_BR',
-            ativo: data.ativo
+            ativo: dbUser.ativo
           });
         } else {
+          console.log('Usuário não encontrado ou inativo, removendo do localStorage');
           localStorage.removeItem('user');
         }
       }
@@ -82,43 +85,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = async (email: string, password: string) => {
+    console.log('Tentando fazer login com:', email);
     setLoading(true);
     try {
-      // Buscar usuário por email
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email.toLowerCase())
-        .single();
+      // Buscar usuário por email usando RPC
+      const { data: userData, error: userError } = await supabase.rpc('get_user_by_email', { 
+        user_email: email.toLowerCase() 
+      });
 
-      if (userError || !userData) {
+      console.log('Resultado da busca do usuário:', { userData, userError });
+
+      if (userError) {
+        console.error('Erro ao buscar usuário:', userError);
+        throw new Error('Erro interno do servidor');
+      }
+
+      if (!userData || userData.length === 0) {
         throw new Error('Credenciais inválidas');
       }
 
+      const user = userData[0];
+
       // Verificar se o usuário está ativo
-      if (!userData.ativo) {
+      if (!user.ativo) {
         throw new Error('Usuário inativo. Entre em contato com o administrador.');
       }
 
       // Verificar senha
-      if (!userData.password_hash) {
+      if (!user.password_hash) {
         throw new Error('Credenciais inválidas');
       }
 
-      const isPasswordValid = await bcrypt.compare(password, userData.password_hash);
+      console.log('Verificando senha...');
+      const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+      console.log('Senha válida:', isPasswordValid);
+      
       if (!isPasswordValid) {
         throw new Error('Credenciais inválidas');
       }
 
       const authenticatedUser: User = {
-        id: userData.id,
-        email: userData.email,
-        name: userData.name,
-        avatar: userData.avatar,
-        cpf_cnpj: userData.cpf_cnpj,
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+        cpf_cnpj: user.cpf_cnpj,
         theme: 'light',
         language: 'pt_BR',
-        ativo: userData.ativo
+        ativo: user.ativo
       };
 
       setUser(authenticatedUser);
@@ -126,7 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       toast({
         title: "Login realizado com sucesso!",
-        description: `Bem-vindo, ${userData.name}!`,
+        description: `Bem-vindo, ${user.name}!`,
       });
     } catch (error: any) {
       console.error('Erro no login:', error);
@@ -137,49 +151,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const register = async (email: string, password: string, name: string) => {
+    console.log('Tentando registrar usuário:', email, name);
     setLoading(true);
     try {
-      // Verificar se o email já existe
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', email.toLowerCase())
-        .single();
+      // Verificar se o email já existe usando RPC
+      const { data: existingUser, error: checkError } = await supabase.rpc('get_user_by_email', { 
+        user_email: email.toLowerCase() 
+      });
 
-      if (existingUser) {
+      console.log('Verificação de email existente:', { existingUser, checkError });
+
+      if (checkError) {
+        console.error('Erro ao verificar email:', checkError);
+        throw new Error('Erro interno do servidor');
+      }
+
+      if (existingUser && existingUser.length > 0) {
         throw new Error('Este email já está cadastrado');
       }
 
       // Hash da senha
+      console.log('Gerando hash da senha...');
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-      // Criar novo usuário
-      const { data: newUser, error } = await supabase
-        .from('users')
-        .insert([{
-          email: email.toLowerCase(),
-          name: name,
-          password_hash: hashedPassword,
-          ativo: true
-        }])
-        .select()
-        .single();
+      // Criar novo usuário usando RPC
+      const { data: newUser, error } = await supabase.rpc('create_user', {
+        user_email: email.toLowerCase(),
+        user_name: name,
+        user_password_hash: hashedPassword
+      });
+
+      console.log('Resultado da criação do usuário:', { newUser, error });
 
       if (error) {
         console.error('Erro ao criar usuário:', error);
         throw new Error('Erro ao criar conta. Tente novamente.');
       }
 
+      if (!newUser || newUser.length === 0) {
+        throw new Error('Erro ao criar conta. Tente novamente.');
+      }
+
+      const createdUser = newUser[0];
+
       const authenticatedUser: User = {
-        id: newUser.id,
-        email: newUser.email,
-        name: newUser.name,
-        avatar: newUser.avatar,
-        cpf_cnpj: newUser.cpf_cnpj,
+        id: createdUser.id,
+        email: createdUser.email,
+        name: createdUser.name,
+        avatar: createdUser.avatar,
+        cpf_cnpj: createdUser.cpf_cnpj,
         theme: 'light',
         language: 'pt_BR',
-        ativo: newUser.ativo
+        ativo: createdUser.ativo
       };
 
       setUser(authenticatedUser);
