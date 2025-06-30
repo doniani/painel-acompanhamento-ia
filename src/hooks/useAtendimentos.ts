@@ -24,21 +24,21 @@ export const useAtendimentos = () => {
   const fetchAtendimentos = async () => {
     try {
       setLoading(true);
-      console.log('Fetching atendimentos...');
+      console.log('Buscando atendimentos...');
       
       const { data, error } = await supabase
         .from('atendimentos')
         .select('*')
         .order('created_at', { ascending: false });
 
-      console.log('Atendimentos response:', { data, error });
+      console.log('Resposta dos atendimentos:', { data, error });
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error('Erro do Supabase:', error);
         throw error;
       }
 
-      console.log('Fetched atendimentos:', data?.length || 0);
+      console.log('Atendimentos encontrados:', data?.length || 0);
       setAtendimentos(data || []);
     } catch (error) {
       console.error('Erro ao buscar atendimentos:', error);

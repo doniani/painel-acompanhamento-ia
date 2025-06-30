@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -23,7 +24,7 @@ export const useConversas = () => {
   const fetchConversas = async () => {
     try {
       setLoading(true);
-      console.log('Fetching conversas...');
+      console.log('Buscando conversas...');
       
       // Buscar conversas com a última mensagem
       const { data: conversasData, error: conversasError } = await supabase
@@ -31,7 +32,7 @@ export const useConversas = () => {
         .select('*')
         .order('updated_at', { ascending: false });
 
-      console.log('Conversas response:', { conversasData, conversasError });
+      console.log('Resposta das conversas:', { conversasData, conversasError });
 
       if (conversasError) throw conversasError;
 
@@ -69,7 +70,7 @@ export const useConversas = () => {
         })
       );
 
-      console.log('Processed conversas:', conversasComMensagens.length);
+      console.log('Conversas processadas:', conversasComMensagens.length);
       setConversas(conversasComMensagens);
     } catch (error) {
       console.error('Erro ao buscar conversas:', error);

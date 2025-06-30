@@ -26,7 +26,7 @@ export const createTestUser = async () => {
       .from('users')
       .select('id')
       .eq('email', testEmail)
-      .single();
+      .maybeSingle();
 
     console.log('Verificação de usuário existente:', { existingUser, checkError });
 
