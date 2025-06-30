@@ -20,6 +20,7 @@ interface AuthContextType {
   logout: () => void;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
+  updateProfile: (userData: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -178,6 +179,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateProfile = async (userData: Partial<User>) => {
+    if (!user) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    try {
+      setLoading(true);
+      console.log('Atualizando perfil do usuário:', userData);
+
+      // Atualizar dados no Supabase
+      const { data: updatedUser, error } = await supabase
+        .from('users')
+        .update({
+          name: userData.name,
+          email: userData.email,
+          cpf_cnpj: userData.cpf_cnpj,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Erro ao atualizar perfil:', error);
+        throw new Error('Erro ao atualizar perfil');
+      }
+
+      // Atualizar estado local
+      const updatedUserData: User = {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        avatar: updatedUser.avatar,
+        cpf_cnpj: updatedUser.cpf_cnpj,
+        ativo: updatedUser.ativo
+      };
+
+      setUser(updatedUserData);
+      localStorage.setItem('user', JSON.stringify(updatedUserData));
+      
+      console.log('Perfil atualizado com sucesso');
+    } catch (error: any) {
+      console.error('Erro ao atualizar perfil:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
@@ -232,7 +282,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    updateProfile
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
